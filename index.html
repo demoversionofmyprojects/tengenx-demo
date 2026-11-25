@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>TengenX Store</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Distressed&family=Rubik+Glitch&family=Oswald:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070707; --bg2:#0f0f0f; --panel:#141414; --line:#2a2a2a; --mute:#6d6d6d; --text:#d6d6d6; --white:#f2f2f2;
+  --display:'Rubik Distressed', 'Oswald', sans-serif;
+  --glitch:'Rubik Glitch', 'Oswald', sans-serif;
+  --ui:'Oswald', sans-serif;
+  --mono:'JetBrains Mono', monospace;
+  --chip: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;background:var(--bg)}
+body{background:var(--bg);color:var(--text);font-family:var(--ui);overflow-x:hidden;min-height:100vh}
+body.locked{overflow:hidden}
+/* scrollbar in app style */
+/* Chrome ignores ::-webkit-scrollbar when scrollbar-color is set, so standard props only for Firefox */
+@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:#5a5a5a #0a0a0a}}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#0a0a0a;border-left:1px dashed #222}
+::-webkit-scrollbar-thumb{background:linear-gradient(#f2f2f2,#5a5a5a);clip-path:polygon(0 0,100% 6px,100% 100%,0 calc(100% - 6px))}
+::-webkit-scrollbar-thumb:hover{background:#f2f2f2}
+::-webkit-scrollbar-button{display:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+/* film grain over everything */
+body::after{content:'';position:fixed;inset:-50%;pointer-events:none;z-index:100;opacity:.09;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grain .6s steps(4) infinite}
+@keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-4%)}75%{transform:translate(-1%,3%)}100%{transform:translate(0,0)}}
+
+.mono{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.cracks{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.cracks path{fill:none;stroke:rgba(255,255,255,.22);stroke-width:1;vector-effect:non-scaling-stroke}
+
+/* ---------- HERO ---------- */
+.hero{position:relative;min-height:100svh;display:flex;flex-direction:column;padding:16px 16px calc(20px + env(safe-area-inset-bottom));overflow:hidden;
+  background:radial-gradient(ellipse at 50% 40%, #1c1c1c 0%, var(--bg) 65%)}
+.topbar{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2}
+.logo{font-family:var(--glitch);font-size:26px;color:var(--white);letter-spacing:.02em;line-height:1}
+.logo small{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.5em;color:var(--mute);margin-top:4px}
+.top-icons{display:flex;gap:8px}
+.icon-btn{position:relative;width:40px;height:40px;display:grid;place-items:center;border:1px solid var(--line);background:rgba(20,20,20,.7);clip-path:var(--chip)}
+.icon-btn svg{width:18px;height:18px;stroke:var(--white);fill:none;stroke-width:1.8}
+.badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;font:700 10px/16px var(--mono);background:var(--white);color:#000;text-align:center}
+.badge:empty,.badge[data-n="0"]{display:none}
+
+.stage{position:relative;flex:1;display:grid;place-items:center;min-height:300px}
+.bgword{position:absolute;font-family:var(--display);font-size:min(48vw,260px);line-height:.8;color:transparent;-webkit-text-stroke:1px #2c2c2c;letter-spacing:-.04em;user-select:none;transform:rotate(-8deg)}
+.morph{position:relative;width:min(68vw,300px);aspect-ratio:200/220;filter:url(#melt);z-index:1}
+.morph svg{position:absolute;inset:0;width:100%;height:100%;opacity:0;overflow:visible}
+.morph svg.on{opacity:1}
+.stage .cracks{z-index:2}
+.stage .cracks path{stroke:rgba(255,255,255,.12)}
+.garment-label{position:absolute;bottom:4px;left:0;right:0;display:flex;justify-content:space-between;z-index:3}
+.garment-label b{color:var(--white);font-weight:400}
+
+.headline{position:relative;z-index:2;margin:10px 0 6px}
+.glitch{position:relative;display:block;font-family:var(--display);font-size:clamp(34px,11vw,64px);line-height:.92;color:var(--white);text-transform:uppercase}
+.glitch::before,.glitch::after{content:attr(data-text);position:absolute;inset:0;pointer-events:none}
+.glitch::before{color:#8a8a8a;animation:gl1 3.2s infinite steps(1);clip-path:inset(0 0 70% 0)}
+.glitch::after{color:#3a3a3a;animation:gl2 2.7s infinite steps(1);clip-path:inset(60% 0 0 0)}
+@keyframes gl1{0%,88%,100%{transform:none}90%{transform:translate(-4px,1px)}93%{transform:translate(3px,-1px);clip-path:inset(20% 0 50% 0)}96%{transform:translate(-2px,0)}}
+@keyframes gl2{0%,84%,100%{transform:none}86%{transform:translate(4px,0)}90%{transform:translate(-3px,1px);clip-path:inset(40% 0 20% 0)}}
+.sub{position:relative;z-index:2;font-size:15px;line-height:1.35;color:#9a9a9a;max-width:34ch;margin-bottom:18px}
+.sub b{color:var(--white);font-weight:500}
+
+.cta{position:relative;z-index:2;display:grid;grid-template-columns:1.4fr 1fr;gap:10px}
+.btn{position:relative;height:56px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:.14em;text-transform:uppercase;clip-path:var(--chip);transition:transform .15s}
+.btn:active{transform:scale(.97)}
+.btn-solid{background:var(--white);color:#050505}
+.btn-solid::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'%3E%3Cpath d='M70 0 L66 9 L72 15 L64 24 L68 31 L62 40 M72 15 L82 19 M64 24 L56 22' fill='none' stroke='%23050505' stroke-width='.6'/%3E%3C/svg%3E") no-repeat center/100% 100%}
+.btn-ghost{background:#111;color:var(--white);border:1px solid #3a3a3a}
+.btn-ghost .badge{position:static;margin-left:2px}
+.btn:disabled{opacity:.4}
+
+/* torn edge divider */
+.torn{height:22px;background:var(--bg2);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 22' preserveAspectRatio='none'%3E%3Cpath d='M0 22 L0 12 L7 16 L13 6 L20 14 L27 9 L33 18 L41 4 L48 13 L55 8 L60 17 L68 5 L75 12 L82 7 L88 16 L95 3 L102 14 L109 9 L115 15 L120 8 L120 22 Z'/%3E%3C/svg%3E") 0 0/240px 100% repeat-x;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 22' preserveAspectRatio='none'%3E%3Cpath d='M0 22 L0 12 L7 16 L13 6 L20 14 L27 9 L33 18 L41 4 L48 13 L55 8 L60 17 L68 5 L75 12 L82 7 L88 16 L95 3 L102 14 L109 9 L115 15 L120 8 L120 22 Z'/%3E%3C/svg%3E") 0 0/240px 100% repeat-x}
+
+.ticker{background:var(--white);color:#050505;overflow:hidden;white-space:nowrap;transform:rotate(-2deg);margin:-6px -10px 0;position:relative;z-index:3}
+.ticker span{display:inline-block;padding:7px 0;font:700 13px var(--ui);letter-spacing:.2em;animation:tick 18s linear infinite}
+@keyframes tick{to{transform:translateX(-50%)}}
+
+/* ---------- CATALOG ---------- */
+.catalog{background:var(--bg2);padding:34px 16px calc(40px + env(safe-area-inset-bottom));min-height:100vh;scroll-margin-top:0}
+.cat-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px}
+.cat-head h2{font-family:var(--display);font-size:44px;line-height:.9;color:var(--white);font-weight:400}
+.chips{display:flex;gap:6px;overflow-x:auto;margin:0 -16px 18px;padding:0 16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:8px 14px;border:1px solid var(--line);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#9a9a9a;clip-path:polygon(0 0,100% 0,100% 70%,calc(100% - 8px) 100%,0 100%)}
+.chip.on{background:var(--white);color:#000;border-color:var(--white)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{position:relative;text-align:left;background:var(--panel);clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,14px 100%,0 calc(100% - 14px));animation:rise .5s both}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}}
+.card:active{transform:scale(.98)}
+.pic{position:relative;aspect-ratio:4/5;background:linear-gradient(160deg,#1e1e1e,#0c0c0c);display:grid;place-items:center;overflow:hidden}
+.pic > svg.g{width:74%;height:auto;filter:drop-shadow(0 10px 18px rgba(0,0,0,.6))}
+.pic .num{position:absolute;top:8px;left:8px}
+.tag{position:absolute;top:8px;right:8px;font:700 10px var(--mono);letter-spacing:.1em;padding:3px 6px;background:var(--white);color:#000;transform:rotate(3deg)}
+.like-dot{position:absolute;bottom:8px;right:8px;width:18px;height:18px;fill:var(--white);display:none}
+.card.liked .like-dot{display:block}
+.info{padding:10px 10px 14px;border-top:1px dashed #2e2e2e}
+.info .brand{font:700 10px var(--mono);letter-spacing:.12em;color:var(--mute);text-transform:uppercase}
+.info .name{font-size:15px;line-height:1.15;color:var(--white);margin:3px 0 8px;min-height:2.3em}
+.info .price{font:700 15px var(--mono);color:var(--white)}
+.empty{grid-column:1/-1;text-align:center;padding:50px 0;color:var(--mute);font-size:15px}
+.foot{text-align:center;margin-top:36px}
+
+/* ---------- SHEETS ---------- */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:opacity .3s;z-index:40}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:94vh;display:flex;flex-direction:column;background:var(--panel);z-index:50;transform:translateY(105%);transition:transform .45s cubic-bezier(.2,.9,.2,1),visibility .45s;visibility:hidden}
+.sheet.on{transform:none;visibility:visible}
+.sheet::before{content:'';position:absolute;left:0;right:0;top:-15px;height:16px;background:var(--panel);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 16' preserveAspectRatio='none'%3E%3Cpath d='M0 16 L0 9 L8 12 L14 3 L22 10 L29 6 L36 14 L44 2 L51 10 L58 5 L64 13 L72 4 L79 9 L86 1 L93 11 L101 6 L108 12 L114 4 L120 9 L120 16 Z'/%3E%3C/svg%3E") 0 0/200px 100% repeat-x;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 16' preserveAspectRatio='none'%3E%3Cpath d='M0 16 L0 9 L8 12 L14 3 L22 10 L29 6 L36 14 L44 2 L51 10 L58 5 L64 13 L72 4 L79 9 L86 1 L93 11 L101 6 L108 12 L114 4 L120 9 L120 16 Z'/%3E%3C/svg%3E") 0 0/200px 100% repeat-x}
+.sheet-scroll{overflow-y:auto;flex:1;overscroll-behavior:contain}
+.close{position:absolute;top:10px;right:12px;z-index:5;width:38px;height:38px;display:grid;place-items:center;background:rgba(10,10,10,.8);border:1px solid var(--line);clip-path:var(--chip);font-size:18px;color:var(--white)}
+
+.p-pic{position:relative;aspect-ratio:1/1;max-height:52vh;width:100%;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%,#262626,#0b0b0b 70%);overflow:hidden}
+.p-pic > svg.g{width:min(62%,320px);height:auto;filter:drop-shadow(0 16px 30px rgba(0,0,0,.7))}
+.p-pic .num{position:absolute;left:14px;bottom:12px}
+.p-body{padding:18px 16px 24px}
+.p-name{font-family:var(--display);font-weight:400;font-size:32px;line-height:.95;color:var(--white);margin:6px 0 10px;text-transform:uppercase}
+.p-price{font:700 22px var(--mono);color:var(--white)}
+.p-sec{margin-top:20px}
+.p-sec h4{font:700 11px var(--mono);letter-spacing:.14em;color:var(--mute);text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between}
+.sizes{display:flex;gap:6px;flex-wrap:wrap}
+.size{min-width:50px;height:44px;padding:0 10px;border:1px solid #3a3a3a;font-weight:500;font-size:15px;clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%)}
+.size.on{background:var(--white);color:#000;border-color:var(--white)}
+.size:disabled{color:#444;border-color:#222;text-decoration:line-through;cursor:not-allowed}
+.shake{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-6px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+.p-desc{font-size:15px;line-height:1.45;color:#a8a8a8}
+.specs{width:100%;border-collapse:collapse;font-size:14px}
+.specs td{padding:7px 0;border-bottom:1px dashed #2a2a2a}
+.specs td:last-child{text-align:right;color:var(--white)}
+details summary{list-style:none;cursor:pointer}
+details summary::-webkit-details-marker{display:none}
+details[open] .plus{transform:rotate(45deg)}
+.plus{display:inline-block;transition:transform .2s}
+.size-table{width:100%;border-collapse:collapse;font:12px var(--mono);text-align:center;margin-top:8px}
+.size-table th,.size-table td{border:1px solid #262626;padding:7px 4px}
+.size-table th{color:var(--mute);font-weight:400}
+.bar{display:grid;grid-template-columns:56px 1fr;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#0d0d0d;border-top:1px solid #222}
+.like{height:56px;display:grid;place-items:center;border:1px solid #3a3a3a;clip-path:var(--chip)}
+.like svg{width:24px;height:24px;stroke:var(--white);stroke-width:1.8;fill:none;transition:transform .2s}
+.like.on svg{fill:var(--white);animation:pop .35s}
+@keyframes pop{50%{transform:scale(1.3)}}
+
+/* cart */
+.c-head{padding:20px 16px 8px}
+.c-head h3{font-family:var(--display);font-weight:400;font-size:40px;color:var(--white);line-height:.9}
+.c-list{padding:0 16px}
+.c-item{display:grid;grid-template-columns:64px 1fr auto;gap:12px;padding:14px 0;border-bottom:1px dashed #2a2a2a;align-items:center}
+.c-thumb{width:64px;height:72px;background:#0c0c0c;display:grid;place-items:center;clip-path:polygon(0 0,100% 0,100% 85%,85% 100%,0 100%)}
+.c-thumb svg{width:80%}
+.c-item .name{color:var(--white);font-size:15px;line-height:1.15}
+.qty{display:flex;align-items:center;margin-top:8px;border:1px solid #333;width:max-content}
+.qty button{width:30px;height:28px;font-size:16px}
+.qty span{min-width:26px;text-align:center;font:700 13px var(--mono)}
+.c-right{text-align:right;display:flex;flex-direction:column;justify-content:space-between;height:100%;align-items:flex-end}
+.rm{color:var(--mute);font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:4px 0}
+.c-sum{padding:16px;display:flex;justify-content:space-between;align-items:baseline}
+.c-sum .total{font:700 24px var(--mono);color:var(--white)}
+.form{padding:4px 16px 20px;display:grid;gap:10px}
+.field{display:grid;gap:5px}
+.field input,.field select{width:100%;height:48px;padding:0 12px;background:#0b0b0b;border:1px solid #333;color:var(--white);font:16px var(--ui);border-radius:0;outline:none;-webkit-appearance:none;appearance:none}
+.field input:focus,.field select:focus{border-color:var(--white)}
+.field.bad input{border-color:#8a8a8a;background:repeating-linear-gradient(135deg,#0b0b0b 0 6px,#161616 6px 12px)}
+.err{font:11px var(--mono);color:#b0b0b0;min-height:0}
+.c-empty,.c-done{padding:30px 16px 40px;text-align:center}
+.c-empty p,.c-done p{color:#8a8a8a;margin:10px 0 22px;font-size:15px;line-height:1.4}
+.big-x{font-family:var(--glitch);font-size:88px;line-height:1;color:#2a2a2a}
+
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--white);color:#000;padding:10px 16px;font:700 13px var(--ui);letter-spacing:.12em;text-transform:uppercase;opacity:0;pointer-events:none;transition:.25s;z-index:90;clip-path:var(--chip);white-space:nowrap}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- DESKTOP ---------- */
+@media (min-width:900px){
+  .hero{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr auto auto;
+    grid-template-areas:"top top" "head stage" "sub stage" "cta stage";column-gap:56px;padding:28px max(48px,calc((100vw - 1280px)/2)) 48px;
+    background:radial-gradient(ellipse at 72% 45%,#1c1c1c 0%,var(--bg) 60%)}
+  .topbar{grid-area:top}
+  .stage{grid-area:stage;min-height:0}
+  .headline{grid-area:head;align-self:end;margin:0 0 14px}
+  .sub{grid-area:sub;font-size:18px;max-width:40ch;margin-bottom:28px}
+  .cta{grid-area:cta;max-width:520px}
+  .logo{font-size:32px}
+  .glitch{font-size:clamp(64px,6.4vw,112px)}
+  .bgword{font-size:min(30vw,440px)}
+  .morph{width:min(30vw,420px)}
+  .btn{height:62px}
+
+  .catalog{padding:64px max(48px,calc((100vw - 1280px)/2)) 60px}
+  .cat-head h2{font-size:80px}
+  .cat-head{margin-bottom:22px}
+  .chips{margin:0 0 28px;padding:0;flex-wrap:wrap;overflow:visible}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px}
+  .info{padding:14px 14px 18px}
+  .info .name{font-size:17px}
+
+  /* product: centered modal, picture left / info right */
+  #product{left:50%;top:50%;bottom:auto;width:min(1080px,92vw);height:min(720px,88vh);max-height:none;
+    transform:translate(-50%,-46%) scale(.96);opacity:0;transition:transform .35s cubic-bezier(.2,.9,.2,1),opacity .25s,visibility .35s}
+  #product.on{transform:translate(-50%,-50%);opacity:1}
+  /* picture pinned to the modal's left half, right half scrolls with the bar under it */
+  #pScroll{padding-left:50%}
+  #pScroll .p-pic{position:absolute;left:0;top:0;bottom:0;width:50%;max-height:none;aspect-ratio:auto}
+  #pScroll .p-body{padding:36px 36px 28px}
+  .p-name{font-size:44px}
+  #product .bar{margin-left:50%;padding:12px 36px}
+
+  /* cart: right drawer with torn left edge */
+  #cart{left:auto;top:0;width:460px;max-height:none;transform:translateX(105%)}
+  #cart.on{transform:none}
+  #cart::before{top:0;bottom:0;left:-15px;right:auto;width:16px;height:auto;
+    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 120' preserveAspectRatio='none'%3E%3Cpath d='M16 0 L9 0 L12 8 L3 14 L10 22 L6 29 L14 36 L2 44 L10 51 L5 58 L13 64 L4 72 L9 79 L1 86 L11 93 L6 101 L12 108 L4 114 L9 120 L16 120 Z'/%3E%3C/svg%3E") 0 0/100% 200px repeat-y;
+            mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 120' preserveAspectRatio='none'%3E%3Cpath d='M16 0 L9 0 L12 8 L3 14 L10 22 L6 29 L14 36 L2 44 L10 51 L5 58 L13 64 L4 72 L9 79 L1 86 L11 93 L6 101 L12 108 L4 114 L9 120 L16 120 Z'/%3E%3C/svg%3E") 0 0/100% 200px repeat-y}
+  .c-head{padding-top:28px}
+
+  .toast{bottom:32px}
+}
+@media (hover:hover){
+  .card,.pic > svg.g,.chip,.icon-btn,.close,.size:not(:disabled),.like{transition:transform .25s,background .2s,color .2s,border-color .2s}
+  .card:hover{transform:translateY(-4px)}
+  .card:hover .pic > svg.g{transform:scale(1.07) rotate(-2deg)}
+  .card:hover .cracks path{stroke:rgba(255,255,255,.45)}
+  .chip:hover,.size:not(:disabled):not(.on):hover,.like:hover,.icon-btn:hover,.close:hover{border-color:var(--white);color:var(--white)}
+  .btn-solid:hover{background:#fff;filter:contrast(1.2)}
+  .btn-ghost:hover{border-color:var(--white)}
+  .rm:hover{color:var(--white)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- melt filter: blur + alpha threshold, blur radius is animated from JS during the morph -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="melt" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur id="meltBlur" in="SourceGraphic" stdDeviation="0"/>
+    <feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -10"/>
+  </filter>
+</svg>
+
+<header class="hero">
+  <div class="topbar">
+    <div class="logo">TENGENX<small>STORE / UA</small></div>
+    <div class="top-icons">
+      <button class="icon-btn" data-go-liked aria-label="Обране">
+        <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>
+        <span class="badge" id="likeBadge"></span>
+      </button>
+      <button class="icon-btn" data-open-cart aria-label="Кошик">
+        <svg viewBox="0 0 24 24"><path d="M5 8h14l-1.5 12h-11z M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+        <span class="badge" id="cartBadge"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="bgword" aria-hidden="true">TGX</div>
+    <div class="morph" id="morph" aria-hidden="true"></div>
+    <svg class="cracks" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 22 L9 25 L14 20 L22 29 L29 27 L33 36 M22 29 L24 40 L20 47"/>
+      <path d="M100 64 L91 60 L87 66 L79 62 L74 70 L68 68 M87 66 L89 76 L84 82"/>
+      <path d="M58 0 L60 7 L55 12 L59 18"/>
+    </svg>
+    <div class="garment-label mono"><span>// <b id="gName">ХУДІ</b></span><span id="gIdx">01 / 03</span></div>
+  </div>
+
+  <div class="headline">
+    <span class="glitch" data-text="Носи те, що ламає систему">Носи те, що ламає систему</span>
+  </div>
+  <p class="sub"><b>TengenX Store</b> — оригінальний одяг світових брендів. Без копій. Без компромісів. Доставка по всій Україні.</p>
+
+  <div class="cta">
+    <button class="btn btn-solid" data-go-catalog>Каталог</button>
+    <button class="btn btn-ghost" data-open-cart>Кошик <span class="badge" id="cartBadge2"></span></button>
+  </div>
+</header>
+
+<div class="ticker" aria-hidden="true"><span>&nbsp;ОРИГІНАЛ ✕ ДОСТАВКА НОВОЮ ПОШТОЮ ✕ ОБМІН 14 ДНІВ ✕ НОВИЙ ДРОП ЩОТИЖНЯ ✕ ОРИГІНАЛ ✕ ДОСТАВКА НОВОЮ ПОШТОЮ ✕ ОБМІН 14 ДНІВ ✕ НОВИЙ ДРОП ЩОТИЖНЯ ✕</span></div>
+<div class="torn"></div>
+
+<main class="catalog" id="catalog">
+  <div class="cat-head">
+    <h2>Каталог</h2>
+    <span class="mono" id="count"></span>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="grid" id="grid"></div>
+  <p class="foot mono">TENGENX STORE © 2026 · ДЕМО-ВЕРСІЯ</p>
+</main>
+
+<div class="scrim" id="scrim"></div>
+
+<section class="sheet" id="product" role="dialog" aria-modal="true" aria-label="Товар">
+  <button class="close" data-close aria-label="Закрити">✕</button>
+  <div class="sheet-scroll" id="pScroll"></div>
+  <div class="bar">
+    <button class="like" id="likeBtn" aria-label="Додати в обране">
+      <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>
+    </button>
+    <button class="btn btn-solid" id="addBtn">У кошик</button>
+  </div>
+</section>
+
+<section class="sheet" id="cart" role="dialog" aria-modal="true" aria-label="Кошик">
+  <button class="close" data-close aria-label="Закрити">✕</button>
+  <div class="sheet-scroll" id="cScroll"></div>
+</section>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready(); tg.expand();
+  try { tg.setHeaderColor('#070707'); tg.setBackgroundColor('#070707'); } catch (e) {}
+}
+const haptic = (t = 'light') => { try { t === 'error' || t === 'success' ? tg.HapticFeedback.notificationOccurred(t) : tg.HapticFeedback.impactOccurred(t); } catch (e) {} };
+
+/* ---------- garment drawings (viewBox 200x220) ---------- */
+const SHAPES = {
+  hoodie: {
+    body: 'M72 32 Q100 2 128 32 L158 44 Q170 48 174 60 L194 122 L172 130 L152 88 L152 206 L48 206 L48 88 L28 130 L6 122 L26 60 Q30 48 42 44 Z',
+    lines: 'M80 34 Q100 60 120 34 M93 48 L91 82 M107 48 L109 82 M70 142 L130 142 L137 178 L63 178 Z M48 196 L152 196 M27 118 L8 111 M173 118 L192 111'
+  },
+  tee: {
+    body: 'M66 24 L86 18 Q100 38 114 18 L134 24 L184 52 L168 92 L146 80 L146 206 L54 206 L54 80 L32 92 L16 52 Z',
+    lines: 'M86 18 Q100 46 114 18 M78 98 L122 98 L122 132 L78 132 Z M84 106 L96 124 L104 110 L116 126 M54 196 L146 196'
+  },
+  pants: {
+    body: 'M58 12 L142 12 L152 206 L108 206 L100 82 L92 206 L48 206 Z',
+    lines: 'M58 26 L142 26 M100 26 L100 82 M70 26 Q72 52 60 60 M130 26 Q128 52 140 60 M55 106 L80 106 L80 140 L56 140 M145 106 L120 106 L120 140 L144 140 M50 192 L92 192 M108 192 L150 192'
+  },
+  jacket: {
+    body: 'M62 24 L86 14 L100 26 L114 14 L138 24 L170 44 Q178 50 180 62 L196 128 L172 134 L152 84 L152 200 Q100 212 48 200 L48 84 L28 134 L4 128 L20 62 Q22 50 30 44 Z',
+    lines: 'M100 26 L100 206 M48 72 Q100 84 152 72 M48 112 Q100 124 152 112 M48 152 Q100 164 152 152 M24 92 L40 88 M176 92 L160 88 M30 116 L44 112 M170 116 L156 112'
+  }
+};
+const garment = (type, fill = '#e4e4e4', ink = '#0a0a0a') =>
+  `<svg class="g" viewBox="0 0 200 220"><path d="${SHAPES[type].body}" fill="${fill}" stroke="${ink}" stroke-width="2" stroke-linejoin="round"/><path d="${SHAPES[type].lines}" fill="none" stroke="${ink}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/></svg>`;
+
+const CRACKS = [
+  'M0 30 L18 34 L26 28 L40 41 L52 38 L61 52 L75 49 M40 41 L44 58 L38 70 M61 52 L66 64',
+  'M100 8 L84 18 L80 32 L66 38 L62 54 M80 32 L92 44 L90 58 M66 38 L50 34',
+  'M30 100 L36 84 L50 78 L54 62 L70 56 M50 78 L64 86 L78 82 M36 84 L22 74',
+  'M100 70 L88 74 L82 66 L70 72 M82 66 L80 54 L86 46'
+];
+const cracks = i => `<svg class="cracks" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${CRACKS[i % CRACKS.length]}"/></svg>`;
+
+/* ---------- data ---------- */
+const PRODUCTS = [
+  { id: 1, cat: 'hoodie', brand: 'Carhartt WIP', name: 'Худі Hooded Chase', price: 4299, fill: '#bdbdbd', tag: 'NEW', color: 'Сірий меланж', comp: '58% бавовна, 42% поліестер', country: 'Туреччина', sold: ['XXL'],
+    desc: 'Щільне худі з начосом та вишитим логотипом. Подвійний капюшон, кишеня-кенгуру, манжети в рубчик. Посадка regular.' },
+  { id: 2, cat: 'tee', brand: 'Stüssy', name: 'Футболка Basic Logo', price: 2199, fill: '#ececec', color: 'Білий', comp: '100% бавовна', country: 'Португалія', sold: [],
+    desc: 'Класична футболка з принтом на спині. Щільний трикотаж 220 г/м², не деформується після прання.' },
+  { id: 3, cat: 'pants', brand: 'Nike ACG', name: 'Карго Smith Summit', price: 5499, fill: '#5a5a5a', tag: 'DROP', color: 'Графіт', comp: '100% нейлон', country: "В'єтнам", sold: ['S'],
+    desc: 'Технічні карго-штани з водовідштовхувальним просоченням. Шість кишень, регульовані манжети, пояс на резинці.' },
+  { id: 4, cat: 'jacket', brand: 'The North Face', name: 'Пуховик Nuptse 1996', price: 11999, fill: '#2b2b2b', ink: '#9a9a9a', color: 'Чорний', comp: 'Пух 700 fill, нейлон ripstop', country: 'Китай', sold: ['XS'],
+    desc: 'Культовий пуховик з глянцевою поверхнею. Капюшон ховається в комір, тримає тепло до −20 °C.' },
+  { id: 5, cat: 'hoodie', brand: 'Stone Island', name: 'Худі Garment Dyed', price: 13499, fill: '#7a7a7a', color: 'Мокрий асфальт', comp: '100% бавовна', country: 'Італія', sold: ['S', 'XXL'],
+    desc: 'Худі з фарбуванням готового виробу та знімним патчем на рукаві. Кожен екземпляр має унікальний відтінок.' },
+  { id: 6, cat: 'tee', brand: 'Represent', name: 'Футболка Owners Club', price: 3299, fill: '#1f1f1f', ink: '#8c8c8c', tag: 'NEW', color: 'Чорний', comp: '100% бавовна', country: 'Португалія', sold: [],
+    desc: 'Оверсайз-футболка з обʼємним принтом. Занижена лінія плеча, щільна горловина.' },
+  { id: 7, cat: 'pants', brand: 'Dickies', name: 'Штани 874 Work Pant', price: 2899, fill: '#d0d0d0', color: 'Світло-сірий', comp: '65% поліестер, 35% бавовна', country: 'Мексика', sold: ['XL'],
+    desc: 'Робочі штани з прямою посадкою та стрілками. Не мнуться, тримають форму роками.' },
+  { id: 8, cat: 'jacket', brand: "Arc'teryx", name: 'Куртка Beta LT', price: 16999, fill: '#444', ink: '#b5b5b5', tag: 'DROP', color: 'Чорний графіт', comp: 'GORE-TEX 3L', country: 'Канада', sold: ['XS', 'XXL'],
+    desc: 'Легка мембранна куртка для міста й гір. Повністю проклеєні шви, шолом-сумісний капюшон.' }
+];
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+const CATS = [['all', 'Всі'], ['hoodie', 'Худі'], ['tee', 'Футболки'], ['pants', 'Штани'], ['jacket', 'Куртки'], ['liked', '♥ Обране']];
+const CAT_NAME = { hoodie: 'ХУДІ', tee: 'ФУТБОЛКА', pants: 'КАРГО', jacket: 'КУРТКА' };
+const byId = id => PRODUCTS.find(p => p.id === id);
+const uah = n => n.toLocaleString('uk-UA') + ' ₴';
+const num = id => '#' + String(id).padStart(3, '0');
+
+/* ---------- state (per-device, demo only) ---------- */
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let liked = new Set(load('tgx_liked', []));
+let cart = load('tgx_cart', []); // [{id, size, qty}]
+let filter = 'all';
+const cartTotal = items => items.reduce((s, it) => s + byId(it.id).price * it.qty, 0);
+console.assert(cartTotal([{ id: 1, qty: 2 }, { id: 2, qty: 1 }]) === 4299 * 2 + 2199, 'cartTotal');
+
+/* ---------- hero morph ---------- */
+const morphEl = document.getElementById('morph');
+const HERO = ['hoodie', 'tee', 'pants'];
+morphEl.innerHTML = HERO.map(t => garment(t, '#e8e8e8', '#0a0a0a')).join('');
+const frames = [...morphEl.children];
+frames[0].classList.add('on');
+const blurEl = document.getElementById('meltBlur');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let cur = 0;
+function morph() {
+  const a = frames[cur], nextI = (cur + 1) % frames.length, b = frames[nextI];
+  const dur = reduce ? 1 : 1600, t0 = performance.now();
+  document.getElementById('gName').textContent = CAT_NAME[HERO[nextI]];
+  document.getElementById('gIdx').textContent = `0${nextI + 1} / 03`;
+  (function step(now) {
+    const t = Math.min(1, (now - t0) / dur), e = t * t * (3 - 2 * t);
+    blurEl.setAttribute('stdDeviation', (Math.sin(Math.PI * t) * 9).toFixed(2));
+    a.style.opacity = 1 - e; b.style.opacity = e;
+    a.style.transform = `scale(${1 - e * .08}) translateY(${e * 10}px)`;
+    b.style.transform = `scale(${.92 + e * .08}) translateY(${(1 - e) * -10}px)`;
+    if (t < 1) return requestAnimationFrame(step);
+    blurEl.setAttribute('stdDeviation', 0);
+    cur = nextI;
+  })(t0);
+}
+frames.forEach((f, i) => f.style.opacity = i ? 0 : 1);
+setInterval(() => !document.hidden && morph(), 3600);
+
+/* ---------- catalog ---------- */
+const grid = document.getElementById('grid');
+function renderChips() {
+  document.getElementById('chips').innerHTML = CATS.map(([k, v]) =>
+    `<button class="chip ${k === filter ? 'on' : ''}" data-cat="${k}">${v}</button>`).join('');
+}
+function renderGrid() {
+  const list = PRODUCTS.filter(p => filter === 'all' || (filter === 'liked' ? liked.has(p.id) : p.cat === filter));
+  document.getElementById('count').textContent = String(list.length).padStart(2, '0') + ' позицій';
+  grid.innerHTML = list.length ? list.map((p, i) => `
+    <button class="card ${liked.has(p.id) ? 'liked' : ''}" data-id="${p.id}" style="animation-delay:${i * 60}ms">
+      <div class="pic">
+        ${garment(p.cat, p.fill, p.ink)}
+        ${cracks(p.id)}
+        <span class="num mono">${num(p.id)}</span>
+        ${p.tag ? `<span class="tag">${p.tag}</span>` : ''}
+        <svg class="like-dot" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>
+      </div>
+      <div class="info">
+        <div class="brand">${p.brand}</div>
+        <div class="name">${p.name}</div>
+        <div class="price">${uah(p.price)}</div>
+      </div>
+    </button>`).join('')
+    : `<div class="empty">${filter === 'liked' ? 'Тут поки порожньо.<br>Тисни ♥ на товарі, щоб зберегти.' : 'Нічого не знайдено.'}</div>`;
+}
+document.getElementById('chips').addEventListener('click', e => {
+  const c = e.target.closest('[data-cat]'); if (!c) return;
+  filter = c.dataset.cat; haptic(); renderChips(); renderGrid();
+});
+grid.addEventListener('click', e => { const c = e.target.closest('[data-id]'); if (c) openProduct(+c.dataset.id); });
+
+/* ---------- sheets ---------- */
+const scrim = document.getElementById('scrim');
+const stack = [];
+function openSheet(el) {
+  if (!stack.includes(el)) stack.push(el);
+  el.style.zIndex = 50 + stack.length;
+  el.classList.add('on'); scrim.classList.add('on'); document.body.classList.add('locked');
+  tg?.BackButton.show();
+}
+function closeSheet() {
+  const el = stack.pop(); if (!el) return;
+  el.classList.remove('on');
+  if (!stack.length) { scrim.classList.remove('on'); document.body.classList.remove('locked'); tg?.BackButton.hide(); }
+}
+scrim.addEventListener('click', closeSheet);
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheet));
+document.addEventListener('keydown', e => e.key === 'Escape' && closeSheet());
+tg?.BackButton.onClick(closeSheet);
+
+/* ---------- product ---------- */
+let current = null, chosen = null;
+const sizeRows = [['XS', 88, 66], ['S', 94, 68], ['M', 100, 70], ['L', 106, 72], ['XL', 112, 74], ['XXL', 118, 76]];
+function openProduct(id) {
+  const p = current = byId(id); chosen = null; haptic();
+  document.getElementById('pScroll').innerHTML = `
+    <div class="p-pic">${garment(p.cat, p.fill, p.ink)}${cracks(p.id + 1)}${cracks(p.id + 2)}
+      <span class="num mono">${num(p.id)} · ${p.brand}</span>${p.tag ? `<span class="tag" style="top:16px;left:14px;right:auto">${p.tag}</span>` : ''}</div>
+    <div class="p-body">
+      <div class="mono">${p.brand}</div>
+      <h2 class="p-name">${p.name}</h2>
+      <div class="p-price">${uah(p.price)}</div>
+      <div class="p-sec">
+        <h4><span>Розмір</span><span id="sizeHint">не обрано</span></h4>
+        <div class="sizes" id="sizes">${SIZES.map(s => `<button class="size" data-s="${s}" ${p.sold.includes(s) ? 'disabled' : ''}>${s}</button>`).join('')}</div>
+      </div>
+      <div class="p-sec"><h4>Опис</h4><p class="p-desc">${p.desc}</p></div>
+      <div class="p-sec"><h4>Деталі</h4>
+        <table class="specs">
+          <tr><td>Колір</td><td>${p.color}</td></tr>
+          <tr><td>Склад</td><td>${p.comp}</td></tr>
+          <tr><td>Виробництво</td><td>${p.country}</td></tr>
+          <tr><td>Артикул</td><td>TGX-${String(p.id * 7919).padStart(5, '0')}</td></tr>
+          <tr><td>Доставка</td><td>1–3 дні, Нова пошта</td></tr>
+        </table>
+      </div>
+      <details class="p-sec"><summary><h4><span>Розмірна сітка, см</span><span class="plus">+</span></h4></summary>
+        <table class="size-table"><tr><th>Розмір</th><th>${p.cat === 'pants' ? 'Талія' : 'Груди'}</th><th>Довжина</th></tr>
+        ${sizeRows.map(([s, a, b]) => `<tr><td>${s}</td><td>${p.cat === 'pants' ? a - 22 : a}</td><td>${p.cat === 'pants' ? b + 30 : b}</td></tr>`).join('')}</table>
+      </details>
+    </div>`;
+  document.getElementById('pScroll').scrollTop = 0;
+  document.getElementById('addBtn').textContent = 'У кошик · ' + uah(p.price);
+  syncLike();
+  openSheet(document.getElementById('product'));
+}
+document.getElementById('pScroll').addEventListener('click', e => {
+  const b = e.target.closest('.size'); if (!b || b.disabled) return;
+  chosen = b.dataset.s; haptic();
+  document.querySelectorAll('#sizes .size').forEach(x => x.classList.toggle('on', x === b));
+  document.getElementById('sizeHint').textContent = chosen;
+});
+function syncLike() {
+  document.getElementById('likeBtn').classList.toggle('on', liked.has(current.id));
+  const n = liked.size; const lb = document.getElementById('likeBadge'); lb.textContent = n || ''; lb.dataset.n = n;
+}
+document.getElementById('likeBtn').addEventListener('click', () => {
+  liked.has(current.id) ? liked.delete(current.id) : liked.add(current.id);
+  save('tgx_liked', [...liked]); haptic('medium'); syncLike(); renderGrid();
+  toast(liked.has(current.id) ? 'Додано в обране' : 'Прибрано з обраного');
+});
+document.getElementById('addBtn').addEventListener('click', () => {
+  if (!chosen) {
+    const s = document.getElementById('sizes'); s.classList.remove('shake'); void s.offsetWidth; s.classList.add('shake');
+    s.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    haptic('error'); return toast('Оберіть розмір');
+  }
+  const row = cart.find(it => it.id === current.id && it.size === chosen);
+  row ? row.qty++ : cart.push({ id: current.id, size: chosen, qty: 1 });
+  save('tgx_cart', cart); haptic('success'); syncCart(); toast('Додано в кошик');
+});
+
+/* ---------- cart ---------- */
+const cScroll = document.getElementById('cScroll');
+let done = null;
+function syncCart() {
+  const n = cart.reduce((s, it) => s + it.qty, 0);
+  ['cartBadge', 'cartBadge2'].forEach(id => { const b = document.getElementById(id); b.textContent = n || ''; b.dataset.n = n; });
+}
+function renderCart() {
+  if (done) {
+    cScroll.innerHTML = `<div class="c-done"><div class="big-x">OK</div><h3 class="p-name">Замовлення ${done} прийнято</h3>
+      <p>Менеджер зв'яжеться з вами найближчим часом для підтвердження. Дякуємо, що обрали TengenX.</p>
+      <button class="btn btn-solid" style="width:100%" data-close-go>До каталогу</button></div>`;
+    return;
+  }
+  if (!cart.length) {
+    cScroll.innerHTML = `<div class="c-head"><h3>Кошик</h3></div><div class="c-empty"><div class="big-x">✕</div>
+      <p>Кошик порожній. Поки що.</p><button class="btn btn-solid" style="width:100%" data-close-go>До каталогу</button></div>`;
+    return;
+  }
+  cScroll.innerHTML = `
+    <div class="c-head"><h3>Кошик</h3><div class="mono" style="margin-top:6px">${cart.reduce((s, it) => s + it.qty, 0)} шт.</div></div>
+    <div class="c-list">${cart.map((it, i) => { const p = byId(it.id); return `
+      <div class="c-item">
+        <div class="c-thumb">${garment(p.cat, p.fill, p.ink)}</div>
+        <div><div class="mono">${p.brand} · ${it.size}</div><div class="name">${p.name}</div>
+          <div class="qty"><button data-q="${i}" data-d="-1" aria-label="Менше">−</button><span>${it.qty}</span><button data-q="${i}" data-d="1" aria-label="Більше">+</button></div></div>
+        <div class="c-right"><button class="rm" data-rm="${i}">Видалити</button><div class="price" style="font:700 14px var(--mono);color:var(--white)">${uah(p.price * it.qty)}</div></div>
+      </div>`; }).join('')}</div>
+    <div class="c-sum"><span class="mono">Разом до сплати</span><span class="total">${uah(cartTotal(cart))}</span></div>
+    <div class="c-sum" style="padding-top:0"><span class="mono">Доставка</span><span class="mono">за тарифами НП</span></div>
+    <div class="torn" style="background:#0b0b0b;transform:rotate(180deg)"></div>
+    <form class="form" id="orderForm" novalidate style="background:#0b0b0b;padding-top:18px">
+      <div class="mono" style="color:var(--white);font-size:13px">Оформлення замовлення</div>
+      <label class="field"><span class="mono">Ім'я та прізвище</span><input name="name" autocomplete="name" placeholder="Тарас Шевченко"><span class="err"></span></label>
+      <label class="field"><span class="mono">Телефон</span><input name="phone" type="tel" autocomplete="tel" placeholder="+380 __ ___ __ __"><span class="err"></span></label>
+      <label class="field"><span class="mono">Місто та відділення Нової пошти</span><input name="np" placeholder="Київ, відділення №12"><span class="err"></span></label>
+      <label class="field"><span class="mono">Оплата</span><select name="pay"><option>Накладений платіж</option><option>Оплата на картку</option></select></label>
+      <button class="btn btn-solid" style="margin-top:8px">Оформити · ${uah(cartTotal(cart))}</button>
+    </form>`;
+  const tu = tg?.initDataUnsafe?.user;
+  if (tu) cScroll.querySelector('[name=name]').value = [tu.first_name, tu.last_name].filter(Boolean).join(' ');
+}
+cScroll.addEventListener('click', e => {
+  const q = e.target.closest('[data-q]'), rm = e.target.closest('[data-rm]');
+  if (e.target.closest('[data-close-go]')) { done = null; closeSheet(); return goCatalog(); }
+  if (q) { const it = cart[+q.dataset.q]; it.qty += +q.dataset.d; if (it.qty < 1) cart.splice(+q.dataset.q, 1); }
+  else if (rm) cart.splice(+rm.dataset.rm, 1);
+  else return;
+  haptic(); save('tgx_cart', cart); syncCart(); renderCart();
+});
+cScroll.addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target, v = Object.fromEntries(new FormData(f));
+  const phone = v.phone.replace(/[\s()-]/g, '');
+  const errs = {
+    name: v.name.trim().length < 2 && 'Вкажіть імʼя',
+    phone: !/^(\+?380|0)\d{9}$/.test(phone) && 'Формат: +380XXXXXXXXX',
+    np: v.np.trim().length < 3 && 'Вкажіть місто та відділення'
+  };
+  let ok = true;
+  for (const k in errs) {
+    const fld = f.elements[k].closest('.field');
+    fld.classList.toggle('bad', !!errs[k]); fld.querySelector('.err').textContent = errs[k] || '';
+    if (errs[k]) ok = false;
+  }
+  if (!ok) return haptic('error');
+  // shortcut: demo only, order is not sent anywhere — wire to a bot/backend before launch
+  done = 'TGX-' + Math.floor(1000 + Math.random() * 9000);
+  cart = []; save('tgx_cart', cart); syncCart(); haptic('success'); renderCart(); cScroll.scrollTop = 0;
+});
+function openCart() { renderCart(); openSheet(document.getElementById('cart')); haptic(); }
+document.querySelectorAll('[data-open-cart]').forEach(b => b.addEventListener('click', openCart));
+
+/* ---------- nav ---------- */
+function goCatalog() { document.getElementById('catalog').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' }); }
+document.querySelector('[data-go-catalog]').addEventListener('click', () => { haptic(); goCatalog(); });
+document.querySelector('[data-go-liked]').addEventListener('click', () => { filter = 'liked'; renderChips(); renderGrid(); goCatalog(); haptic(); });
+
+let tt;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 1600); }
+
+renderChips(); renderGrid(); syncCart();
+const lb = document.getElementById('likeBadge'); lb.textContent = liked.size || ''; lb.dataset.n = liked.size;
+</script>
+</body>
+</html>
