@@ -186,50 +186,14 @@ details[open] .plus{transform:rotate(45deg)}
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--white);color:#000;padding:10px 16px;font:700 13px var(--ui);letter-spacing:.12em;text-transform:uppercase;opacity:0;pointer-events:none;transition:.25s;z-index:90;clip-path:var(--chip);white-space:nowrap}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 
-/* ---------- DESKTOP ---------- */
-@media (min-width:900px){
-  .hero{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr auto auto;
-    grid-template-areas:"top top" "head stage" "sub stage" "cta stage";column-gap:56px;padding:28px max(48px,calc((100vw - 1280px)/2)) 48px;
-    background:radial-gradient(ellipse at 72% 45%,#1c1c1c 0%,var(--bg) 60%)}
-  .topbar{grid-area:top}
-  .stage{grid-area:stage;min-height:0}
-  .headline{grid-area:head;align-self:end;margin:0 0 14px}
-  .sub{grid-area:sub;font-size:18px;max-width:40ch;margin-bottom:28px}
-  .cta{grid-area:cta;max-width:520px}
-  .logo{font-size:32px}
-  .glitch{font-size:clamp(64px,6.4vw,112px)}
-  .bgword{font-size:min(30vw,440px)}
-  .morph{width:min(30vw,420px)}
-  .btn{height:62px}
-
-  .catalog{padding:64px max(48px,calc((100vw - 1280px)/2)) 60px}
-  .cat-head h2{font-size:80px}
-  .cat-head{margin-bottom:22px}
-  .chips{margin:0 0 28px;padding:0;flex-wrap:wrap;overflow:visible}
-  .grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px}
-  .info{padding:14px 14px 18px}
-  .info .name{font-size:17px}
-
-  /* product: centered modal, picture left / info right */
-  #product{left:50%;top:50%;bottom:auto;width:min(1080px,92vw);height:min(720px,88vh);max-height:none;
-    transform:translate(-50%,-46%) scale(.96);opacity:0;transition:transform .35s cubic-bezier(.2,.9,.2,1),opacity .25s,visibility .35s}
-  #product.on{transform:translate(-50%,-50%);opacity:1}
-  /* picture pinned to the modal's left half, right half scrolls with the bar under it */
-  #pScroll{padding-left:50%}
-  #pScroll .p-pic{position:absolute;left:0;top:0;bottom:0;width:50%;max-height:none;aspect-ratio:auto}
-  #pScroll .p-body{padding:36px 36px 28px}
-  .p-name{font-size:44px}
-  #product .bar{margin-left:50%;padding:12px 36px}
-
-  /* cart: right drawer with torn left edge */
-  #cart{left:auto;top:0;width:460px;max-height:none;transform:translateX(105%)}
-  #cart.on{transform:none}
-  #cart::before{top:0;bottom:0;left:-15px;right:auto;width:16px;height:auto;
-    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 120' preserveAspectRatio='none'%3E%3Cpath d='M16 0 L9 0 L12 8 L3 14 L10 22 L6 29 L14 36 L2 44 L10 51 L5 58 L13 64 L4 72 L9 79 L1 86 L11 93 L6 101 L12 108 L4 114 L9 120 L16 120 Z'/%3E%3C/svg%3E") 0 0/100% 200px repeat-y;
-            mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 120' preserveAspectRatio='none'%3E%3Cpath d='M16 0 L9 0 L12 8 L3 14 L10 22 L6 29 L14 36 L2 44 L10 51 L5 58 L13 64 L4 72 L9 79 L1 86 L11 93 L6 101 L12 108 L4 114 L9 120 L16 120 Z'/%3E%3C/svg%3E") 0 0/100% 200px repeat-y}
-  .c-head{padding-top:28px}
-
-  .toast{bottom:32px}
+/* ---------- DESKTOP: same phone layout in a centered column, sides stay empty ---------- */
+html{overflow-x:hidden}
+body{max-width:540px;margin:0 auto;overflow-x:clip}
+.sheet{left:50%;right:auto;width:100%;max-width:540px;transform:translate(-50%,105%)}
+.sheet.on{transform:translateX(-50%)}
+@media (min-width:541px){
+  body{border-left:1px solid #161616;border-right:1px solid #161616}
+  .hero{min-height:min(100svh,940px)}
 }
 @media (hover:hover){
   .card,.pic > svg.g,.chip,.icon-btn,.close,.size:not(:disabled),.like{transition:transform .25s,background .2s,color .2s,border-color .2s}
